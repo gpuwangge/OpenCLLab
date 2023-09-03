@@ -11,13 +11,4 @@ kernel void matrixAdd(
 
     size_t i = globalCol*M + globalRow;
     C[i] = A[i] + B[i];
-
-    // Compute a single element (loop over K)
-    //float acc = 0.0f;
-    //for (int k=0; k<K; k++) {
-    //    acc += A[k*M + globalRow] * B[globalCol*K + k];
-    //}
-
-    // Store the result
-    //C[globalCol*M + globalRow] = acc;
 }

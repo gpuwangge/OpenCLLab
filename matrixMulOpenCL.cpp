@@ -1,12 +1,39 @@
 #include "clFramework\\clApp.hpp"
 
-//#define DIM 32768 //mxk squares + kxn squares, use power of 2(32768 = 1<<15)
-//NVIDIA GTX 1080 TI: allocate host buffer: 28s, host>>device: 1.4s, kernel: 2.5s, device>>host: 1.4s
-//Intel Xe Graphics: allocate host buffer: 47s, host >> device error: clCreateBuffer() throw an insance error
+//#define DIM 4096
+//NVIDIA GTX 1080 TI: allocate host buffer: 0.46s, host>>device: 0.023s, kernel: 0.033s, device>>host: 0.76s
+
+//#define DIM 8192
+//NVIDIA GTX 1080 TI: allocate host buffer: 1.78s, host>>device: 0.1s, kernel: 0.13s, device>>host: 8.6s?
 
 #define DIM 16384
-//NVIDIA GTX 1080 TI: allocate host buffer: 7s, host>>device: 0.34s, kernel: 0.55s, device>>host: 0.21s
-//Intel Xe Graphics: allocate host buffer: 9s, host>>device: 0.7s, kernel: 0.0029s(???), device>>host: 0.6s
+//NVIDIA GTX 1080 TI: allocate host buffer: 7.12s, host>>device: 0.33s, kernel: 0.55s, device>>host: 69.55s?
+
+
+//#define DIM 32768
+
+
+void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
+    int count = 0;
+    for(int m = 0; m < M; m++){ //row
+        for(int n = 0; n < N; n++){ //col
+            //row major matrix multiplication
+            /*
+            outputMatrix[m*N + n] = 0;
+            for(int k = 0; k < K; k++){
+                outputMatrix[m*N + n] += matrixA[m*K + k] * matrixB[k*N + n];
+            }
+            */
+            //column major matrix multiplication
+            outputMatrix[n*M + m] = 0;
+            for(int k = 0; k < K; k++){
+                outputMatrix[n*M + m] += matrixA[k*M + m] * matrixB[n*K + k];
+            }
+            count++;
+            if(count >= sampleNum) return;
+        }
+    }
+}
 
 int main() {
 	CTimer timer;
@@ -14,13 +41,13 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(false, true, true);
+	CCLAPP clApp(false, true, false);//verbose, profiler, verify
 	clApp.initDevice();
-	clApp.loadShader("matrixAdd.cl");// Compute c = a + b.
+	clApp.loadShader("matrixMul.cl");// Compute c = a + b.
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
-	cl::Kernel program_kernel(clApp.program, "matrixAdd");
+	cl::Kernel program_kernel(clApp.program, "matrixMul");
 
 	if(clApp.bProfiler) timer.printDeltaTime("Initializazion done");
 
@@ -57,12 +84,13 @@ int main() {
 	//Step 4: Set kernel parameters.
 	program_kernel.setArg(0, matrixDimM);
 	program_kernel.setArg(1, matrixDimN);
-	program_kernel.setArg(2, A_device);
-	program_kernel.setArg(3, B_device);
-	program_kernel.setArg(4, C_device);
+    program_kernel.setArg(2, matrixDimK);
+	program_kernel.setArg(3, A_device);
+	program_kernel.setArg(4, B_device);
+	program_kernel.setArg(5, C_device);
 	
 	//Step 5: Launch kernel on the compute device.
-	cl::NDRange global(matrixDimM, matrixDimN);
+    cl::NDRange global(matrixDimM, matrixDimN);
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, cl::NullRange);
 
 	if(clApp.bProfiler) timer.printDeltaTime("Kernel run done");
@@ -76,13 +104,16 @@ int main() {
 
 	//Verify Correctness
 	if(clApp.bVerify){
-		int sampleNum = 100;
+        std::cout<<"Verify Correctness"<<std::endl;
+		int sampleNum = 100 > matrixDimM*matrixDimN ? matrixDimM*matrixDimN : 100;
+        std::vector<float> outputMatrix(matrixDimM*matrixDimN); 
+        CPUSingleThreadMatMul(matrixDimM, matrixDimN, matrixDimK, a_host, b_host, outputMatrix, sampleNum);
+
 		for (int i=0; i<sampleNum; i++) {
-			float real = a_host[i]+b_host[i];
-			float diff = real-c_host[i];
-			float threshold = 0.0f;
+			float diff = outputMatrix[i]-c_host[i];
+			float threshold = 0.00001f;
 			if(diff > threshold)
-				std::cout<<"Host: "<<real<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+				std::cout<<"Host: "<<outputMatrix[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
 		}
 	}
 
