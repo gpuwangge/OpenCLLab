@@ -5,10 +5,15 @@
 #include <vector>
 #include <string>
 
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
+//#define __CL_ENABLE_EXCEPTIONS
+#define CL_HPP_ENABLE_EXCEPTIONS
+#define CL_HPP_TARGET_OPENCL_VERSION 300
+#include <CL/opencl.hpp>
 
-static const char source[] =
+#include <CL/Utils/Utils.hpp>
+
+
+static const char shaderCode[] =
     "#if defined(cl_khr_fp64)\n"
     "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
     "#elif defined(cl_amd_fp64)\n"
@@ -28,6 +33,8 @@ static const char source[] =
     "       c[i] = a[i] + b[i];\n"
     "    }\n"
     "}\n";
+
+
 
 class CCLAPP{
 public:
@@ -106,9 +113,13 @@ bool CCLAPP::init(){
 		
 
 		if(bVerbose) std::cout<<"Compile OpenCL program for found device. "<<std::endl;
-		program = cl::Program(context, cl::Program::Sources(
-				1, std::make_pair(source, strlen(source))
-				));
+		// program = cl::Program(context, cl::Program::Sources(1, std::make_pair(source, strlen(source))));
+		//cl_int error;
+		//std::string program_cl = cl::util::read_text_file("add.cl", &error);
+		//cl::Program::clCreateProgramWithSource(context, 1, program_cl, strlen(source), error);
+		std::string shaderCodeStr(shaderCode);
+        program = cl::Program(context, shaderCodeStr);		
+		
 
 		try {
 			program.build(devices);

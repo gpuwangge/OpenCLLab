@@ -1,8 +1,5 @@
 ﻿# OpenCLLab
-
-OpenCL code with C++ Wrapper  
-
-Windows  
+OpenCL code with C++ Wrapper for Windows
 
 # Build
 mkdir build  
@@ -11,13 +8,22 @@ cmake -G "MinGW Makefiles" ..
 make  
 
 # Install
-Install CUDA SDK (OpenCL is included in CUDA SDK)  
+## Compiler
+I use MinGW  
+https://www.mingw-w64.org/downloads  
+(Browse to the Sources section)  
+You must use posix version (x86_64-posix-seh) (8.1.0)  
 
-Put this in environment variable INCLUDE:  
-C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include  
+## OpenCL
+Download SDK here:  
+https://github.com/KhronosGroup/OpenCL-SDK  
+I use v2023.04.17 (Synchronize with OpenCL v3.0.14 specification release): OpenCL-SDK-v2023.04.17-Win-x64.zip  
+Add include/ to environment variable INCLUDE.  
+Add lib/ to environment variable LIB.  
 
-Put this in environment variable LIB:  
-C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\lib\x64  
+## Alternative
+If you install CUDA SDK, OpenCL is included in the CUDA SDK  
+(You can use MinGW x86_64-win32-seh for CUDA version)  
 
 
 
