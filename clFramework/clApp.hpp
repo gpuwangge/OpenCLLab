@@ -10,9 +10,12 @@
 #define CL_HPP_TARGET_OPENCL_VERSION 300
 #include <CL/opencl.hpp>
 
-#include <CL/Utils/Utils.hpp>
+//#include <CL/Utils/Utils.hpp>
+#include<fstream>
 
+#define SHADER_PATH "../shaders/"
 
+/*
 static const char shaderCode[] =
     "#if defined(cl_khr_fp64)\n"
     "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
@@ -32,9 +35,7 @@ static const char shaderCode[] =
     "    if (i < n) {\n"
     "       c[i] = a[i] + b[i];\n"
     "    }\n"
-    "}\n";
-
-
+    "}\n";*/
 
 class CCLAPP{
 public:
@@ -49,6 +50,8 @@ public:
 	cl::Context context;
     cl::CommandQueue queue;
     cl::Program program;
+
+	bool readFile(const std::string& filename, std::string &buffer);
 
 private:
 	std::vector<cl::Platform> platform;
@@ -113,11 +116,10 @@ bool CCLAPP::init(){
 		
 
 		if(bVerbose) std::cout<<"Compile OpenCL program for found device. "<<std::endl;
-		// program = cl::Program(context, cl::Program::Sources(1, std::make_pair(source, strlen(source))));
-		//cl_int error;
-		//std::string program_cl = cl::util::read_text_file("add.cl", &error);
-		//cl::Program::clCreateProgramWithSource(context, 1, program_cl, strlen(source), error);
-		std::string shaderCodeStr(shaderCode);
+		std::string shaderCodeStr;
+		std::string fileName = "add.cl";
+		std::string fullFileName = SHADER_PATH + fileName;
+		readFile(fullFileName, shaderCodeStr);
         program = cl::Program(context, shaderCodeStr);		
 		
 
@@ -137,6 +139,27 @@ bool CCLAPP::init(){
 			<< std::endl;
 		return false;
     }
+
+    return true;
+}
+
+
+ bool CCLAPP::readFile(const std::string& filename, std::string &buffer) {
+    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) {
+		std::cout<<"failed to open file: "<<filename<<std::endl;
+        return false;
+        //throw std::runtime_error("failed to open file!");
+    }
+
+    size_t fileSize = (size_t)file.tellg();
+    buffer.resize(fileSize);
+
+    file.seekg(0);
+    file.read(&buffer[0], fileSize);
+
+    file.close();
 
     return true;
 }
