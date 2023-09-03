@@ -10,19 +10,19 @@ int main() {
 		cl::Kernel add(clApp.program, "add");
 
 		// Prepare input data.
-		std::vector<double> a_host(clApp.NDRange, 1);
-		std::vector<double> b_host(clApp.NDRange, 2);
-		std::vector<double> c_host(clApp.NDRange);
+		std::vector<float> a_host(clApp.NDRange, 1); //double
+		std::vector<float> b_host(clApp.NDRange, 2); //double
+		std::vector<float> c_host(clApp.NDRange); //double
 
 		// Allocate device buffers and transfer data host >> device.
 		cl::Buffer A_device(clApp.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-			a_host.size() * sizeof(double), a_host.data());
+			a_host.size() * sizeof(float), a_host.data());
 
 		cl::Buffer B_device(clApp.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-			b_host.size() * sizeof(double), b_host.data());
+			b_host.size() * sizeof(float), b_host.data());
 
 		cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE,
-			c_host.size() * sizeof(double));
+			c_host.size() * sizeof(float));
 
 		// Set kernel parameters.
 		add.setArg(0, static_cast<cl_ulong>(clApp.NDRange));
@@ -34,7 +34,7 @@ int main() {
 		clApp.queue.enqueueNDRangeKernel(add, cl::NullRange, clApp.NDRange, cl::NullRange);
 
 		// Get result device >> host.
-		clApp.queue.enqueueReadBuffer(C_device, CL_TRUE, 0, c_host.size() * sizeof(double), c_host.data());
+		clApp.queue.enqueueReadBuffer(C_device, CL_TRUE, 0, c_host.size() * sizeof(float), c_host.data());
 
 		// Should get '3' here.
 		std::cout << c_host[134224] << std::endl;
