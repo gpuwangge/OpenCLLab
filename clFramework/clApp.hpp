@@ -41,7 +41,7 @@ static const char shaderCode[] =
 
 class CCLAPP{
 public:
-    CCLAPP(bool verbose, bool profiler);
+    CCLAPP(bool verbose, bool profiler, bool verify);
     ~CCLAPP();
 
     bool initDevice();
@@ -50,6 +50,7 @@ public:
 
     bool bVerbose;
 	bool bProfiler;
+	bool bVerify;
     const size_t maxNDRange = 1 << 20; //1048576, determine this value?
 
 	cl::Context context;
@@ -63,9 +64,10 @@ private:
     std::vector<cl::Device> devices;	
 };
 
-CCLAPP::CCLAPP(bool verbose, bool profiler){
+CCLAPP::CCLAPP(bool verbose, bool profiler, bool verify){
 	bVerbose = verbose;
 	bProfiler = profiler;
+	bVerify = verify;
 }
 CCLAPP::~CCLAPP(){}
 

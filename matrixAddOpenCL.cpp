@@ -1,7 +1,12 @@
 #include "clFramework\\clApp.hpp"
 
-#define DIM 32768 //mxk squares + kxn squares, use power of 2(32768 = 1<<15)
+//#define DIM 32768 //mxk squares + kxn squares, use power of 2(32768 = 1<<15)
 //NVIDIA GTX 1080 TI: allocate host buffer: 28s, host>>device: 1.4s, kernel: 2.5s, device>>host: 1.4s
+//Intel Xe Graphics: allocate host buffer: 47s, host >> device error: clCreateBuffer() throw an insance error
+
+#define DIM 16384
+//NVIDIA GTX 1080 TI: allocate host buffer: 7s, host>>device: 0.34s, kernel: 0.55s, device>>host: 0.21s
+//Intel Xe Graphics: allocate host buffer: 9s, host>>device: 0.7s, kernel: 0.001s(???), device>>host: 0.6s
 
 int main() {
 	CTimer timer;
@@ -9,7 +14,7 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(false, true);
+	CCLAPP clApp(false, true, true);
 	clApp.initDevice();
 	clApp.loadShader("matrixAdd.cl");// Compute c = a + b.
 	clApp.buildProgram();
@@ -55,8 +60,6 @@ int main() {
 	program_kernel.setArg(2, A_device);
 	program_kernel.setArg(3, B_device);
 	program_kernel.setArg(4, C_device);
-
-	if(clApp.bProfiler) timer.printDeltaTime("Set kernel arguments done");
 	
 	//Step 5: Launch kernel on the compute device.
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, matrixDimM*matrixDimN, cl::NullRange);
@@ -69,6 +72,19 @@ int main() {
 	if(clApp.bProfiler) timer.printDeltaTime("Transfer data back to host done");
 
 	if(clApp.bVerbose) PrintMatrix("Matrix C: ", c_host, matrixDimM, matrixDimN);
+
+	//Verify Correctness
+	if(clApp.bVerify){
+		int sampleNum = 100;
+		for (int i=0; i<sampleNum; i++) {
+			float real = a_host[i]+b_host[i];
+			float diff = real-c_host[i];
+			float threshold = 0.0f;
+			if(diff > threshold)
+				std::cout<<"Host: "<<real<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+		}
+	}
+
 
 	return 1;
 }

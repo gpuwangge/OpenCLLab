@@ -1,7 +1,7 @@
 #include "clFramework\\clApp.hpp"
 
 int main() {
-	CCLAPP clApp(true, true);
+	CCLAPP clApp(true, true, true);
 	clApp.initDevice();
 	clApp.loadShader("vectorAdd.cl");// Compute c = a + b.
 	clApp.buildProgram();
