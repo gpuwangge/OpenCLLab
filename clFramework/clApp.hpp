@@ -75,7 +75,7 @@ bool CCLAPP::init(){
 			return false;
 		}
 
-		if(bVerbose) std::cout<<"Get Device. Get first available GPU device which supports double precision. "<<std::endl;
+		if(bVerbose) std::cout<<"Get Device. "<<std::endl;
 		for(auto p = platform.begin(); devices.empty() && p != platform.end(); p++) {
 			std::vector<cl::Device> pldev;
 
@@ -91,10 +91,13 @@ bool CCLAPP::init(){
 
 					std::string ext = device->getInfo<CL_DEVICE_EXTENSIONS>();
 
+					// Get first available GPU device which supports double precision.
+					/*
 					if (
 						ext.find("cl_khr_fp64") == std::string::npos &&
 						ext.find("cl_amd_fp64") == std::string::npos
 					) continue;
+					*/
 
 					devices.push_back(*device);
 					context = cl::Context(devices);
