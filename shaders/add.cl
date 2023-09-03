@@ -16,9 +16,9 @@
 
 kernel void add(
         ulong n,
-        global const double *a,
-        global const double *b,
-        global double *c
+        global const float *a, //double
+        global const float *b, //double
+        global float *c //double
         )
 {
     size_t i = get_global_id(0);
