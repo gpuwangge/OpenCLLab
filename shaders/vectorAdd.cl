@@ -14,7 +14,7 @@
 */
 
 
-kernel void add(
+kernel void vectorAdd(
         ulong n,
         global const float *a, //double
         global const float *b, //double

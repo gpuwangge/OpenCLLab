@@ -49,7 +49,7 @@ public:
 	bool buildProgram();
 
     bool bVerbose;
-    const size_t NDRange= 1 << 20;
+    const size_t maxNDRange = 1 << 20; //determine this value?
 
 	cl::Context context;
     cl::CommandQueue queue;
@@ -67,7 +67,7 @@ CCLAPP::~CCLAPP(){}
 
 bool CCLAPP::initDevice(){
     bVerbose = false;
-	if(bVerbose) std::cout<<"NDRange: "<<NDRange<<std::endl;
+	if(bVerbose) std::cout<<"NDRange: "<<maxNDRange<<std::endl;
 
     try {
 		if(bVerbose) std::cout<<"Create CL Platform. Get list of OpenCL platforms."<<std::endl;

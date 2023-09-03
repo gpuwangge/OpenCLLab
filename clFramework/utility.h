@@ -49,5 +49,15 @@ static cl_int PrintDeviceInfoSummary(const std::vector<cl::Device> devices)
     return CL_SUCCESS;
 }
 
+static void PrintMatrix(std::vector<float> &matrix, int M, int N){
+	//Row id is M; Col id is N
+	for(int i = 0; i < M; i++){
+		for(int j = 0; j < N; j++){
+			int index = i * M + j;
+			std::cout<<matrix[index]<<" ";
+		}
+		std::cout<<std::endl;
+	}
+}
 
 #endif
