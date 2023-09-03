@@ -3,6 +3,7 @@
 
 #include <CL/opencl.hpp>
 #include <iostream>
+#include <chrono>
 
 static cl_int PrintPlatformInfoSummary(cl::Platform platform)
 {
@@ -49,7 +50,8 @@ static cl_int PrintDeviceInfoSummary(const std::vector<cl::Device> devices)
     return CL_SUCCESS;
 }
 
-static void PrintMatrix(std::vector<float> &matrix, int M, int N){
+static void PrintMatrix(std::string message, std::vector<float> &matrix, int M, int N){
+    std::cout<<message<<std::endl;
 	//Row id is M; Col id is N
 	for(int i = 0; i < M; i++){
 		for(int j = 0; j < N; j++){
@@ -59,5 +61,26 @@ static void PrintMatrix(std::vector<float> &matrix, int M, int N){
 		std::cout<<std::endl;
 	}
 }
+
+class CTimer final{
+public:
+	CTimer(){}
+	~CTimer(){}
+
+	decltype(std::chrono::high_resolution_clock::now()) startTime;
+	decltype(std::chrono::high_resolution_clock::now()) lastTime;
+
+	void initialize(){
+		startTime = std::chrono::high_resolution_clock::now();
+		lastTime = std::chrono::high_resolution_clock::now();
+	}
+
+	void printDeltaTime(std::string message){
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		auto deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTime).count();
+		lastTime = currentTime;
+		std::cout<< message << ", time elapsed: "<<deltaTime<< "s"<<std::endl;
+	}
+};
 
 #endif

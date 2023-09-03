@@ -41,7 +41,7 @@ static const char shaderCode[] =
 
 class CCLAPP{
 public:
-    CCLAPP();
+    CCLAPP(bool verbose, bool profiler);
     ~CCLAPP();
 
     bool initDevice();
@@ -49,7 +49,8 @@ public:
 	bool buildProgram();
 
     bool bVerbose;
-    const size_t maxNDRange = 1 << 20; //determine this value?
+	bool bProfiler;
+    const size_t maxNDRange = 1 << 20; //1048576, determine this value?
 
 	cl::Context context;
     cl::CommandQueue queue;
@@ -62,16 +63,16 @@ private:
     std::vector<cl::Device> devices;	
 };
 
-CCLAPP::CCLAPP(){}
+CCLAPP::CCLAPP(bool verbose, bool profiler){
+	bVerbose = verbose;
+	bProfiler = profiler;
+}
 CCLAPP::~CCLAPP(){}
 
 bool CCLAPP::initDevice(){
-    bVerbose = false;
 	if(bVerbose) std::cout<<"NDRange: "<<maxNDRange<<std::endl;
 
     try {
-		if(bVerbose) std::cout<<"Create CL Platform. Get list of OpenCL platforms."<<std::endl;
-		
 		cl::Platform::get(&platforms);
 
 		if (platforms.empty()) {
@@ -79,11 +80,10 @@ bool CCLAPP::initDevice(){
 			return false;
 		}
 
-		if(bVerbose) std::cout<<"Get Device. "<<std::endl;
 		size_t i = 0;
 		for(auto pPlatform = platforms.begin(); devices.empty() && pPlatform != platforms.end(); pPlatform++, i++) {
-			std::cout << "Platform[" << i << "]:\n";
-			PrintPlatformInfoSummary(*pPlatform);
+			if(bVerbose) std::cout << "Platform[" << i << "]:\n";
+			if(bVerbose) PrintPlatformInfoSummary(*pPlatform);
 
 			std::vector<cl::Device> pldev;
 
@@ -111,7 +111,7 @@ bool CCLAPP::initDevice(){
 			}
 		}
 
-		PrintDeviceInfoSummary(devices);
+		if(bVerbose) PrintDeviceInfoSummary(devices);
 
 		if (devices.empty()) {
 			std::cerr << "GPUs with double precision not found." << std::endl;
@@ -134,11 +134,11 @@ bool CCLAPP::initDevice(){
 }
 
 void CCLAPP::loadShader(std::string filename){
-	if(bVerbose) std::cout<<"Compile OpenCL program for found device. "<<std::endl;
 	std::string shaderCodeStr;
 	std::string fullFilename = SHADER_PATH + filename;
 	readFile(fullFilename, shaderCodeStr);
 	program = cl::Program(context, shaderCodeStr);	
+	if(bVerbose) std::cout<<"Compile OpenCL program: "<<fullFilename<<std::endl;
 }
 
 bool CCLAPP::buildProgram(){
