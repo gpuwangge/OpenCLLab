@@ -1,12 +1,7 @@
 #include "clFramework\\clApp.hpp"
 
 //#define DIM 32768 //mxk squares + kxn squares, use power of 2(32768 = 1<<15)
-//NVIDIA GTX 1080 TI: allocate host buffer: 28s, host>>device: 1.4s, kernel: 2.5s, device>>host: 1.4s
-//Intel Xe Graphics: allocate host buffer: 47s, host >> device error: clCreateBuffer() throw an insance error
-
 #define DIM 16384
-//NVIDIA GTX 1080 TI: allocate host buffer: 7s, host>>device: 0.34s, kernel: 0.55s, device>>host: 0.21s
-//Intel Xe Graphics: allocate host buffer: 9s, host>>device: 0.7s, kernel: 0.0029s(???), device>>host: 0.6s
 
 int main() {
 	CTimer timer;
@@ -52,7 +47,7 @@ int main() {
 	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE,
 		c_host.size() * sizeof(float));
 
-	if(clApp.bProfiler) timer.printDeltaTime("Transfer data to device done");
+	if(clApp.bProfiler) timer.printDeltaTime("Host >> Device");
 
 	//Step 4: Set kernel parameters.
 	program_kernel.setArg(0, matrixDimM);
@@ -71,20 +66,25 @@ int main() {
 	//Step 6: device >> host
 	clApp.queue.enqueueReadBuffer(C_device, CL_TRUE, 0, c_host.size() * sizeof(float), c_host.data());
 
-	if(clApp.bProfiler) timer.printDeltaTime("Transfer data back to host done");
+	if(clApp.bProfiler) timer.printDeltaTime("Device >> Host");
 
 	if(clApp.bVerbose) PrintMatrix("Matrix C: ", c_host, matrixDimM, matrixDimN);
 
 	//Verify Correctness
 	if(clApp.bVerify){
-		int sampleNum = 100;
+		int sampleNum = 100 > matrixDimM*matrixDimN ? matrixDimM*matrixDimN : 100;
+		std::cout<<"sampleNum: "<<sampleNum<<std::endl;
+		float threshold = 0.000001f;
+		std::cout<<"threshold: "<<threshold<<std::endl;
+
+		std::cout<<"Verification begin."<<std::endl;
 		for (int i=0; i<sampleNum; i++) {
 			float real = a_host[i]+b_host[i];
 			float diff = real-c_host[i];
-			float threshold = 0.0f;
 			if(diff > threshold)
 				std::cout<<"Host: "<<real<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
 		}
+		std::cout<<"Verification done."<<std::endl;
 	}
 
 

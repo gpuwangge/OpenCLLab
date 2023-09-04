@@ -1,13 +1,15 @@
 #include "clFramework\\clApp.hpp"
+#include <iomanip>
 
-//#define DIM 4096
+#define DIM 4096
 //#define DIM 8192
 //#define DIM 16384
-#define DIM 32768
+//#define DIM 32768
 
 
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
     int count = 0;
+	int printDelta = sampleNum / 100;
     for(int m = 0; m < M; m++){ //row
         for(int n = 0; n < N; n++){ //col
             //row major matrix multiplication
@@ -23,6 +25,11 @@ void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std
                 outputMatrix[n*M + m] += matrixA[k*M + m] * matrixB[n*K + k];
             }
             count++;
+			if(count % printDelta == 0){
+				float completeRate = (count * 100.0)/sampleNum ;
+				std::cout<<"Completed: "<<completeRate<<"%"<<std::endl;
+			}
+			
             if(count >= sampleNum) return;
         }
     }
@@ -34,9 +41,9 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(false, true, false);//verbose, profiler, verify
+	CCLAPP clApp(false, true, true);//verbose, profiler, verify
 	clApp.initDevice();
-	clApp.loadShader("matrixMul.cl");// Compute c = a + b.
+	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
@@ -72,7 +79,7 @@ int main() {
 	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE,
 		c_host.size() * sizeof(float));
 
-	if(clApp.bProfiler) timer.printDeltaTime("Transfer data to device done");
+	if(clApp.bProfiler) timer.printDeltaTime("Host >> Device");
 
 	//Step 4: Set kernel parameters.
 	program_kernel.setArg(0, matrixDimM);
@@ -92,23 +99,29 @@ int main() {
 	//Step 6: device >> host
 	clApp.queue.enqueueReadBuffer(C_device, CL_TRUE, 0, c_host.size() * sizeof(float), c_host.data());
 
-	if(clApp.bProfiler) timer.printDeltaTime("Transfer data back to host done");
+	if(clApp.bProfiler) timer.printDeltaTime("Device >> Host");
 
 	if(clApp.bVerbose) PrintMatrix("Matrix C: ", c_host, matrixDimM, matrixDimN);
 
 	//Verify Correctness
 	if(clApp.bVerify){
-        std::cout<<"Verify Correctness"<<std::endl;
-		int sampleNum = 100 > matrixDimM*matrixDimN ? matrixDimM*matrixDimN : 100;
+		int sampleNum = 10000 > matrixDimM*matrixDimN ? matrixDimM*matrixDimN : 10000;
+		//int sampleNum = matrixDimM*matrixDimN;
+		std::cout<<"sampleNum: "<<sampleNum<<std::endl;
+		float threshold = 0.000001f;
+		std::cout<<"threshold: "<<threshold<<std::endl;
+
         std::vector<float> outputMatrix(matrixDimM*matrixDimN); 
         CPUSingleThreadMatMul(matrixDimM, matrixDimN, matrixDimK, a_host, b_host, outputMatrix, sampleNum);
+		if(clApp.bProfiler) timer.printDeltaTime("CPU single thread calculation done");
 
+		std::cout<<"Verification begin."<<std::endl;
 		for (int i=0; i<sampleNum; i++) {
 			float diff = outputMatrix[i]-c_host[i];
-			float threshold = 0.00001f;
 			if(diff > threshold)
-				std::cout<<"Host: "<<outputMatrix[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+				std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputMatrix[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
 		}
+		std::cout<<"Verification done."<<std::endl;
 	}
 
 
