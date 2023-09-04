@@ -64,6 +64,7 @@ int main() {
 	//Step 5: Launch kernel on the compute device.
 	cl::NDRange global(matrixDimM, matrixDimN);
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, cl::NullRange);
+	clApp.queue.finish();//block host until device finishes
 
 	if(clApp.bProfiler) timer.printDeltaTime("Kernel run done");
 

@@ -1,16 +1,9 @@
 #include "clFramework\\clApp.hpp"
 
 //#define DIM 4096
-//NVIDIA GTX 1080 TI: allocate host buffer: 0.46s, host>>device: 0.023s, kernel: 0.033s, device>>host: 0.76s
-
 //#define DIM 8192
-//NVIDIA GTX 1080 TI: allocate host buffer: 1.78s, host>>device: 0.1s, kernel: 0.13s, device>>host: 8.6s?
-
-#define DIM 16384
-//NVIDIA GTX 1080 TI: allocate host buffer: 7.12s, host>>device: 0.33s, kernel: 0.55s, device>>host: 69.55s?
-
-
-//#define DIM 32768
+//#define DIM 16384
+#define DIM 32768
 
 
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
@@ -92,6 +85,7 @@ int main() {
 	//Step 5: Launch kernel on the compute device.
     cl::NDRange global(matrixDimM, matrixDimN);
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, cl::NullRange);
+	clApp.queue.finish();//block host until device finishes
 
 	if(clApp.bProfiler) timer.printDeltaTime("Kernel run done");
 

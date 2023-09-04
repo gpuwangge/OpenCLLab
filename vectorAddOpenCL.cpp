@@ -33,6 +33,7 @@ int main() {
 	
 	//Step 5: Launch kernel on the compute device.
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, clApp.maxNDRange, cl::NullRange);
+	clApp.queue.finish();//block host until device finishes
 
 	//Step 6: device >> host
 	clApp.queue.enqueueReadBuffer(C_device, CL_TRUE, 0, c_host.size() * sizeof(float), c_host.data());
