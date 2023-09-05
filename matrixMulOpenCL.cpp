@@ -47,7 +47,7 @@ int main() {
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
-	cl::Kernel program_kernel(clApp.program, "matrixMul1");
+	cl::Kernel program_kernel(clApp.program, "matrixMul2");
 
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Initializazion done");
 
