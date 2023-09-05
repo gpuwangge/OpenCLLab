@@ -1,5 +1,6 @@
 // Constants for kernels 1 -- 5
 #define TS 32                        // The square-root of the 2D tile-size (== work-group dims)
+//#define TS 16     //for Iris GPU
 
 // Constants for kernels 3, 5
 #define WPT 8                        // The amount of work-per-thread, i.e. the thread-coarsening factor
@@ -29,6 +30,10 @@
 #define CEIL_DIV(x,y) (((x) + (y) - 1) / (y))
 #define MOD2(x,y) ((x) % (y))
 #define DIV2(x,y) ((x) / (y))
+
+// Constants for the supporting transpose kernel
+#define TRANSPOSEX 16
+#define TRANSPOSEY 16
 
 
 kernel void matrixMul1(const int M, const int N, const int K, global const float *A, global const float *B, global float *C ){
@@ -234,6 +239,36 @@ kernel void matrixMul4(const int M, const int N, const int K, global const float
     // Store the final results in C
     C[globalCol*(M/WIDTH) + globalRow] = acc;
 }*/
+
+// Simple transpose kernel for a P * Q matrix
+kernel void transpose(const int P, const int Q, global const float* input,  global float* output) {
+    // Thread identifiers
+    const int tx = get_local_id(0);
+    const int ty = get_local_id(1);
+    const int ID0 = get_group_id(0)*TRANSPOSEX + tx; // 0..P
+    const int ID1 = get_group_id(1)*TRANSPOSEY + ty; // 0..Q
+
+    // Set-up the local memory for shuffling
+    __local float buffer[TRANSPOSEX][TRANSPOSEY];
+
+    // Swap the x and y coordinates to perform the rotation (coalesced)
+    if (ID0 < P && ID1 < Q) {
+        buffer[ty][tx] = input[ID1*P + ID0];
+    }
+
+    // Synchronise all threads
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // We don't have to swap the x and y thread indices here,
+    // because that's already done in the local memory
+    const int newID0 = get_group_id(1)*TRANSPOSEY + tx;
+    const int newID1 = get_group_id(0)*TRANSPOSEX + ty;
+
+    // Store the transposed result (coalesced)
+    if (newID0 < Q && newID1 < P) {
+        output[newID1*Q + newID0] = buffer[tx][ty];
+    }
+}
 
 
 // Pre-transpose the input matrix B and use rectangular tiles

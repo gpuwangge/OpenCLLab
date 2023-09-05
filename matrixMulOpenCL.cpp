@@ -47,7 +47,7 @@ int main() {
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
-	cl::Kernel program_kernel(clApp.program, "matrixMul2");
+	cl::Kernel program_kernel(clApp.program, "matrixMul3");
 
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Initializazion done");
 
@@ -91,8 +91,17 @@ int main() {
 	
 	//Step 5: Launch kernel on the compute device.
 	const int TS = 32; //Tile Size: for 1080 TI, CL_DEVICE_MAX_WORK_GROUP_SIZE=1024=32x32, so 32 is maximum TS value.
-	cl::NDRange local(TS, TS);
-    cl::NDRange global(matrixDimM, matrixDimN);
+	//const int TS = 16; //for Iris GPU
+
+	//for kernel 1 and 2
+	//cl::NDRange local(TS, TS);
+    //cl::NDRange global(matrixDimM, matrixDimN);
+
+	//for kernel 3
+	const int WPT = 8; 
+	cl::NDRange local(TS, TS/WPT);
+    cl::NDRange global(matrixDimM, matrixDimN/WPT);
+
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, local);
 	clApp.queue.finish();//block host until device finishes
 
