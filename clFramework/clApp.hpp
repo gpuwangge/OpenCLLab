@@ -84,8 +84,8 @@ bool CCLAPP::initDevice(){
 
 		size_t i = 0;
 		for(auto pPlatform = platforms.begin(); devices.empty() && pPlatform != platforms.end(); pPlatform++, i++) {
-			if(bVerbose) std::cout << "Platform[" << i << "]:\n";
-			if(bVerbose) PrintPlatformInfoSummary(*pPlatform);
+			if(bProfiler) std::cout << "Platform[" << i << "]:\n";
+			if(bProfiler) PrintPlatformInfoSummary(*pPlatform);
 
 			std::vector<cl::Device> pldev;
 
@@ -113,14 +113,13 @@ bool CCLAPP::initDevice(){
 			}
 		}
 
-		if(bVerbose) PrintDeviceInfoSummary(devices);
+		if(bProfiler) PrintDeviceInfoSummary(devices);
 
 		if (devices.empty()) {
 			std::cerr << "GPUs with double precision not found." << std::endl;
 			return false;
 		}
 
-		if(bVerbose) std::cout << devices[0].getInfo<CL_DEVICE_NAME>() << std::endl;
         queue = cl::CommandQueue(context, devices[0]);
 
 		//if(bVerbose) std::cout<<"Create command queue. "<<std::endl;

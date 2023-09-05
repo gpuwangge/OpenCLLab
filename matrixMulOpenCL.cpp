@@ -9,7 +9,7 @@
 
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
     int count = 0;
-	int printDelta = sampleNum / 100;
+	int printDelta = sampleNum / 5;
     for(int m = 0; m < M; m++){ //row
         for(int n = 0; n < N; n++){ //col
             //row major matrix multiplication
@@ -47,9 +47,9 @@ int main() {
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
-	cl::Kernel program_kernel(clApp.program, "matrixMul");
+	cl::Kernel program_kernel(clApp.program, "matrixMul1");
 
-	if(clApp.bProfiler) timer.printDeltaTime("Initializazion done");
+	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Initializazion done");
 
 	//Step 2: Allocate host buffers, and fill with random numbers
 	const int matrixDimM = DIM; 
@@ -69,7 +69,7 @@ int main() {
 	if(clApp.bVerbose) PrintMatrix("Matrix A: ", a_host, matrixDimM, matrixDimK);
 	if(clApp.bVerbose) PrintMatrix("Matrix B: ", b_host, matrixDimK, matrixDimN);
 
-	if(clApp.bProfiler) timer.printDeltaTime("Allocate host buffer done");
+	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Allocate host buffer done");
 
 	//Step 3: host >> device (Allocate device buffers and transfer data) 
 	cl::Buffer A_device(clApp.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -79,7 +79,7 @@ int main() {
 	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE,
 		c_host.size() * sizeof(float));
 
-	if(clApp.bProfiler) timer.printDeltaTime("Host >> Device");
+	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Host >> Device");
 
 	//Step 4: Set kernel parameters.
 	program_kernel.setArg(0, matrixDimM);
@@ -90,16 +90,18 @@ int main() {
 	program_kernel.setArg(5, C_device);
 	
 	//Step 5: Launch kernel on the compute device.
+	const int TS = 32; //Tile Size: for 1080 TI, CL_DEVICE_MAX_WORK_GROUP_SIZE=1024=32x32, so 32 is maximum TS value.
+	cl::NDRange local(TS, TS);
     cl::NDRange global(matrixDimM, matrixDimN);
-	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, cl::NullRange);
+	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, local);
 	clApp.queue.finish();//block host until device finishes
 
-	if(clApp.bProfiler) timer.printDeltaTime("Kernel run done");
+	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Kernel run done");
 
 	//Step 6: device >> host
 	clApp.queue.enqueueReadBuffer(C_device, CL_TRUE, 0, c_host.size() * sizeof(float), c_host.data());
 
-	if(clApp.bProfiler) timer.printDeltaTime("Device >> Host");
+	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Device >> Host");
 
 	if(clApp.bVerbose) PrintMatrix("Matrix C: ", c_host, matrixDimM, matrixDimN);
 
@@ -113,7 +115,7 @@ int main() {
 
         std::vector<float> outputMatrix(matrixDimM*matrixDimN); 
         CPUSingleThreadMatMul(matrixDimM, matrixDimN, matrixDimK, a_host, b_host, outputMatrix, sampleNum);
-		if(clApp.bProfiler) timer.printDeltaTime("CPU single thread calculation done");
+		if(clApp.bProfiler) timer.printDeltaTime("---Profiler: CPU single thread calculation done");
 
 		std::cout<<"Verification begin."<<std::endl;
 		for (int i=0; i<sampleNum; i++) {

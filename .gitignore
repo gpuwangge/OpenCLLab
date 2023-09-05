@@ -1,3 +1,8 @@
 build/
 *.exe
 *.pdb
+
+.gradle/
+.idea/
+local.properties
+.cxx/

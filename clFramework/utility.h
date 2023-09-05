@@ -45,6 +45,18 @@ static cl_int PrintDeviceInfoSummary(const std::vector<cl::Device> devices)
                   << devices[i].getInfo<CL_DEVICE_PROFILE>() << "\n";
         std::cout << "\tDriver Version: "
                   << devices[i].getInfo<CL_DRIVER_VERSION>() << "\n";
+        std::cout << "\tCL_DEVICE_MAX_WORK_GROUP_SIZE: "
+                  << devices[i].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << "\n";
+        std::cout << "\tCL_DEVICE_MAX_WORK_ITEM_DIMENSIONS: "
+                  << devices[i].getInfo<CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS>() << "\n";          
+        std::cout << "\tCL_DEVICE_MAX_WORK_ITEM_SIZES[0]: "
+                  << devices[i].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] << "\n";
+        std::cout << "\tCL_DEVICE_MAX_WORK_ITEM_SIZES[1]: "
+                  << devices[i].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[1] << "\n";
+        std::cout << "\tCL_DEVICE_MAX_WORK_ITEM_SIZES[2]: "
+                  << devices[i].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[2] << "\n";
+        std::cout << "\tCL_DEVICE_MAX_COMPUTE_UNITS: "
+                  << devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "\n";
     }
 
     return CL_SUCCESS;
