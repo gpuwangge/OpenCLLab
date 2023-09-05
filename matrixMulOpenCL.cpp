@@ -6,6 +6,18 @@
 //#define DIM 16384
 //#define DIM 32768
 
+#define TILESIZE 32  //Tile Size: for 1080 TI, CL_DEVICE_MAX_WORK_GROUP_SIZE=1024=32x32, so 32 is maximum TS value.
+//#define TILESIZE 16   //for Iris GPU
+
+enum KernelModes 
+{   KERNEL1 = 0, 
+    KERNEL2 = 1, 
+    KERNEL3 = 2,
+    KERNEL4 = 3,
+	KERNEL5 = 4,
+    KERNEL6 = 5	
+};
+
 
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
     int count = 0;
@@ -46,9 +58,13 @@ int main() {
 	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();
 
-	//Step 1: Create kernel program from shader function
-	cl::Kernel program_kernel(clApp.program, "matrixMul3");
+	KernelModes kernelMode = KERNEL3;
 
+	//Step 1: Create kernel program from shader function
+	cl::Kernel program_kernel;
+	std::string kernelName = "matrixMul" + std::to_string(kernelMode+1);
+	program_kernel = cl::Kernel(clApp.program, kernelName.c_str());
+	
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Initializazion done");
 
 	//Step 2: Allocate host buffers, and fill with random numbers
@@ -90,17 +106,29 @@ int main() {
 	program_kernel.setArg(5, C_device);
 	
 	//Step 5: Launch kernel on the compute device.
-	const int TS = 32; //Tile Size: for 1080 TI, CL_DEVICE_MAX_WORK_GROUP_SIZE=1024=32x32, so 32 is maximum TS value.
-	//const int TS = 16; //for Iris GPU
+	const int WPT = 8; //for kernel 3
+	cl::NDRange local(TILESIZE, TILESIZE);
+    cl::NDRange global(matrixDimM, matrixDimN);
 
-	//for kernel 1 and 2
-	//cl::NDRange local(TS, TS);
-    //cl::NDRange global(matrixDimM, matrixDimN);
+	switch(kernelMode){
+	case KERNEL1:
+		break;
+	case KERNEL2:
+		break;
+	case KERNEL3:
+		local = cl::NDRange(TILESIZE, TILESIZE/WPT);
+    	global = cl::NDRange(matrixDimM, matrixDimN/WPT);
+		break;
+	case KERNEL4:
+		break;
+	case KERNEL5:
+		break;
+	case KERNEL6:
+		break;
+	default:
+		break;
+	}
 
-	//for kernel 3
-	const int WPT = 8; 
-	cl::NDRange local(TS, TS/WPT);
-    cl::NDRange global(matrixDimM, matrixDimN/WPT);
 
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, local);
 	clApp.queue.finish();//block host until device finishes
