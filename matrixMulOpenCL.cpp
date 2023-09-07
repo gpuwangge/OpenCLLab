@@ -10,14 +10,24 @@
 //#define TILESIZE 16   //for Iris GPU
 
 enum KernelModes 
-{   KERNEL1 = 0, 
-    KERNEL2 = 1, 
-    KERNEL3 = 2,
-    KERNEL4 = 3,
-	KERNEL5 = 4,
-    KERNEL6 = 5	
+{   KERNEL1 = 0, //Naive implementation
+    KERNEL2 = 1, //Tiling in the local memory
+    KERNEL3 = 2, //More work per thread
+    KERNEL4 = 3, //Wider data-types
+	KERNEL5 = 4, //Transposed input matrix and rectangular tiles
+    KERNEL6 = 5	 //2D register blocking
 };
 
+// Constants for the supporting transpose kernel
+#define TRANSPOSEX 16
+#define TRANSPOSEY 16
+
+// Constants for kernels 6 -- 10
+#define TSM 128                      // The tile-size in dimension M
+#define TSN 128                      // The tile-size in dimension N
+#define TSK 16                       // The tile-size in dimension K
+#define WPTM 8                       // The amount of work-per-thread in dimension M
+#define WPTN 8                       // The amount of work-per-thread in dimension N
 
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
     int count = 0;
@@ -58,12 +68,16 @@ int main() {
 	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();
 
-	KernelModes kernelMode = KERNEL3;
+	KernelModes kernelMode = KERNEL6;
 
 	//Step 1: Create kernel program from shader function
 	cl::Kernel program_kernel;
 	std::string kernelName = "matrixMul" + std::to_string(kernelMode+1);
 	program_kernel = cl::Kernel(clApp.program, kernelName.c_str());
+
+	cl::Kernel program_transpose;
+	if(kernelMode == KERNEL5|KERNEL6)
+		program_transpose = cl::Kernel(clApp.program, "transpose");
 	
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Initializazion done");
 
@@ -95,14 +109,26 @@ int main() {
 	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE,
 		c_host.size() * sizeof(float));
 
+	//Transpose B for Kernel5&6
+	cl::Buffer B_TR_device(clApp.context, CL_MEM_READ_WRITE,
+		b_host.size() * sizeof(float));
+
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Host >> Device");
 
 	//Step 4: Set kernel parameters.
+	if(kernelMode == KERNEL5|KERNEL6){
+		program_transpose.setArg(0, matrixDimK);
+		program_transpose.setArg(1, matrixDimN);
+		program_transpose.setArg(2, B_device);
+		program_transpose.setArg(3, B_TR_device);		
+	}
+
 	program_kernel.setArg(0, matrixDimM);
 	program_kernel.setArg(1, matrixDimN);
     program_kernel.setArg(2, matrixDimK);
 	program_kernel.setArg(3, A_device);
-	program_kernel.setArg(4, B_device);
+	if(kernelMode == KERNEL5|KERNEL6) program_kernel.setArg(4, B_TR_device);
+	else program_kernel.setArg(4, B_device);
 	program_kernel.setArg(5, C_device);
 	
 	//Step 5: Launch kernel on the compute device.
@@ -122,13 +148,22 @@ int main() {
 	case KERNEL4:
 		break;
 	case KERNEL5:
+		local = cl::NDRange(TILESIZE, TILESIZE/WPT);
+    	global = cl::NDRange(matrixDimM, matrixDimN/WPT);
 		break;
 	case KERNEL6:
+		local = cl::NDRange(TSM/WPTM, TSN/WPTN);
+    	global = cl::NDRange(matrixDimM/WPTM, matrixDimN/WPTN);
 		break;
 	default:
 		break;
 	}
 
+	if(kernelMode == KERNEL5|KERNEL6){
+		cl::NDRange transposeLocal(TRANSPOSEX, TRANSPOSEY);
+    	cl::NDRange transposeGlobal(matrixDimK, matrixDimN);
+		clApp.queue.enqueueNDRangeKernel(program_transpose, cl::NullRange, transposeGlobal, transposeLocal);
+	}
 
 	clApp.queue.enqueueNDRangeKernel(program_kernel, cl::NullRange, global, local);
 	clApp.queue.finish();//block host until device finishes
