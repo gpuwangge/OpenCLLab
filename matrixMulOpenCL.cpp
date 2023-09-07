@@ -71,7 +71,7 @@ int main() {
 	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();
 
-	KernelModes kernelMode = KERNEL4;
+	KernelModes kernelMode = KERNEL6;
 
 	//Step 1: Create kernel program from shader function
 	cl::Kernel program_kernel;
@@ -107,11 +107,11 @@ int main() {
 		a_host.size() * sizeof(float), a_host.data());
 	cl::Buffer B_device(clApp.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		b_host.size() * sizeof(float), b_host.data());
-	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE, //?why write?: copy value to erase the previous run if needed 
+	cl::Buffer C_device(clApp.context, CL_MEM_READ_ONLY, //Option: CL_MEM_READ_WRITE: if need copy value to erase the previous run
 		c_host.size() * sizeof(float));
 
 	//Transpose B for Kernel5&6
-	cl::Buffer B_TR_device(clApp.context, CL_MEM_READ_WRITE, //?change to read only?
+	cl::Buffer B_TR_device(clApp.context, CL_MEM_READ_ONLY, 
 		b_host.size() * sizeof(float));
 
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Host >> Device");
@@ -132,7 +132,7 @@ int main() {
 	else program_kernel.setArg(4, B_device);
 	program_kernel.setArg(5, C_device);
 
-	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Set kernel parameters");
+	//if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Set kernel parameters");
 	
 	//Step 5: Launch kernel on the compute device.
 	const int WPT = 8; //for kernel 3
