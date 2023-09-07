@@ -143,9 +143,19 @@ kernel void matrixMul3(const int M, const int N, const int K, global const float
 }
 
 
+// Data-widths
+#if WIDTH == 1
+    typedef float floatX;
+#elif WIDTH == 2
+    typedef float2 floatX;
+#elif WIDTH == 4
+    typedef float4 floatX;
+#elif WIDTH == 8
+    typedef float8 floatX;
+#endif
+
 // Use wider data types
-/*
-kernel void matrixMul4(const int M, const int N, const int K, global const float *A, global const float *B, global float *C ){
+kernel void matrixMul4(const int M, const int N, const int K, global const floatX *A, global const floatX *B, global floatX *C ){
 
     // Thread identifiers
     const int row = get_local_id(0); // Local row ID (max: TS/WIDTH)
@@ -154,18 +164,18 @@ kernel void matrixMul4(const int M, const int N, const int K, global const float
     const int globalCol = TS*get_group_id(1) + col; // Col ID of C (0..N)
 
     // Local memory to fit a tile of TS*TS elements of A and B
-    __local float Asub[TS][TS/WIDTH];
-    __local float Bsub[TS][TS/WIDTH];
+    __local floatX Asub[TS][TS/WIDTH];
+    __local floatX Bsub[TS][TS/WIDTH];
 
     // Initialise the accumulation registers
     #if WIDTH == 1
-        float acc = 0.0f;
+        floatX acc = 0.0f;
     #elif WIDTH == 2
-        float acc = { 0.0f, 0.0f };
+        floatX acc = { 0.0f, 0.0f };
     #elif WIDTH == 4
-        float acc = { 0.0f, 0.0f, 0.0f, 0.0f };
+        floatX acc = { 0.0f, 0.0f, 0.0f, 0.0f };
     #elif WIDTH == 8
-        float acc = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+        floatX acc = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     #endif
     
     // Loop over all tiles
@@ -182,7 +192,7 @@ kernel void matrixMul4(const int M, const int N, const int K, global const float
         barrier(CLK_LOCAL_MEM_FENCE);
 
         // Perform the computation for a single tile
-        float vecA, vecB;
+        floatX vecA, vecB;
         float valB;
         for (int k=0; k<TS/WIDTH; k++) {
             vecB = Bsub[col][k];
@@ -238,7 +248,7 @@ kernel void matrixMul4(const int M, const int N, const int K, global const float
 
     // Store the final results in C
     C[globalCol*(M/WIDTH) + globalRow] = acc;
-}*/
+}
 
 // Simple transpose kernel for a P * Q matrix
 kernel void transpose(const int P, const int Q, global const float* input,  global float* output) {

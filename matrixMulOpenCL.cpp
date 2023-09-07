@@ -18,6 +18,9 @@ enum KernelModes
     KERNEL6 = 5	 //2D register blocking
 };
 
+// Constants for kernels 4, 7 -- 10
+#define WIDTH 4                      // The vector-width (in number of floats)
+
 // Constants for the supporting transpose kernel
 #define TRANSPOSEX 16
 #define TRANSPOSEY 16
@@ -68,7 +71,7 @@ int main() {
 	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();
 
-	KernelModes kernelMode = KERNEL6;
+	KernelModes kernelMode = KERNEL4;
 
 	//Step 1: Create kernel program from shader function
 	cl::Kernel program_kernel;
@@ -89,12 +92,10 @@ int main() {
 	std::vector<float> b_host(matrixDimK*matrixDimN); 
 	std::vector<float> c_host(matrixDimM*matrixDimN); 
 
-	for (int i=0; i<matrixDimM*matrixDimK; i++) {
+	for (int i=0; i<matrixDimM*matrixDimK; i++) 
 		a_host[i] = (float)rand() / (float)RAND_MAX;
-	}
-	for (int i=0; i<matrixDimK*matrixDimN; i++) {
+	for (int i=0; i<matrixDimK*matrixDimN; i++) 
 		b_host[i] = (float)rand() / (float)RAND_MAX;
-	}
 
 	if(clApp.bVerbose) PrintMatrix("Matrix A: ", a_host, matrixDimM, matrixDimK);
 	if(clApp.bVerbose) PrintMatrix("Matrix B: ", b_host, matrixDimK, matrixDimN);
@@ -106,11 +107,11 @@ int main() {
 		a_host.size() * sizeof(float), a_host.data());
 	cl::Buffer B_device(clApp.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		b_host.size() * sizeof(float), b_host.data());
-	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE,
+	cl::Buffer C_device(clApp.context, CL_MEM_READ_WRITE, //?why write?: copy value to erase the previous run if needed 
 		c_host.size() * sizeof(float));
 
 	//Transpose B for Kernel5&6
-	cl::Buffer B_TR_device(clApp.context, CL_MEM_READ_WRITE,
+	cl::Buffer B_TR_device(clApp.context, CL_MEM_READ_WRITE, //?change to read only?
 		b_host.size() * sizeof(float));
 
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Host >> Device");
@@ -130,6 +131,8 @@ int main() {
 	if(kernelMode == KERNEL5|KERNEL6) program_kernel.setArg(4, B_TR_device);
 	else program_kernel.setArg(4, B_device);
 	program_kernel.setArg(5, C_device);
+
+	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Set kernel parameters");
 	
 	//Step 5: Launch kernel on the compute device.
 	const int WPT = 8; //for kernel 3
@@ -146,6 +149,8 @@ int main() {
     	global = cl::NDRange(matrixDimM, matrixDimN/WPT);
 		break;
 	case KERNEL4:
+		local = cl::NDRange(TILESIZE/WIDTH, TILESIZE);
+    	global = cl::NDRange((size_t)(matrixDimM/WIDTH), (size_t)matrixDimN);
 		break;
 	case KERNEL5:
 		local = cl::NDRange(TILESIZE, TILESIZE/WPT);
