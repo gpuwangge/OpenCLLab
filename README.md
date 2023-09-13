@@ -1,7 +1,7 @@
 ﻿# OpenCLLab
-OpenCL code with C++ Wrapper for Windows
-
 ![Windows](https://img.shields.io/badge/Windows-passing-green)
+
+OpenCL code with C++ Wrapper for Windows  
 
 ## Build
 mkdir build  
