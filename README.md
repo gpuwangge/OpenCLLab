@@ -30,6 +30,7 @@ If you install CUDA SDK, OpenCL is included in the CUDA SDK
 ## Credits
 https://github.com/KhronosGroup/OpenCL-CLHPP/tree/main  
 https://github.khronos.org/OpenCL-CLHPP/  
+https://gist.github.com/ddemidov/2925717  
 https://cnugteren.github.io/tutorial/pages/page1.html  
 https://github.com/CNugteren/myGEMM/tree/e2a364537f2b8725b3f5ba5f81008d04558a2327  
 
