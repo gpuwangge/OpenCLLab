@@ -1,6 +1,8 @@
 ﻿# OpenCLLab
 OpenCL code with C++ Wrapper for Windows
 
+[![Python](https://img.shields.io/pypi/pyversions/tensorflow.svg)]
+
 ## Build
 mkdir build  
 cd build  
