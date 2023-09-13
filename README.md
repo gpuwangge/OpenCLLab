@@ -1,7 +1,7 @@
 ﻿# OpenCLLab
 OpenCL code with C++ Wrapper for Windows
 
-![Python](https://img.shields.io/badge/any_text-you_like-blue)
+![Python](https://img.shields.io/badge/Windows-passing-green)
 
 ## Build
 mkdir build  
