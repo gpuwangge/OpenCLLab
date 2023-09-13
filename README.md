@@ -1,7 +1,7 @@
 ﻿# OpenCLLab
 ![Windows](https://img.shields.io/badge/Windows-passing-brightgreen)
 
-OpenCL code with C++ Wrapper for Windows  
+OpenCL code with C++ bindings for Windows  
 
 ## Build
 mkdir build  
@@ -28,6 +28,8 @@ If you install CUDA SDK, OpenCL is included in the CUDA SDK
 (You can use MinGW x86_64-win32-seh for CUDA version)  
 
 ## Credits
+https://github.com/KhronosGroup/OpenCL-CLHPP/tree/main  
+https://github.khronos.org/OpenCL-CLHPP/  
 https://cnugteren.github.io/tutorial/pages/page1.html  
 https://github.com/CNugteren/myGEMM/tree/e2a364537f2b8725b3f5ba5f81008d04558a2327  
 
