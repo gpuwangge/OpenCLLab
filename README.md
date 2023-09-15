@@ -1,5 +1,6 @@
 ﻿# OpenCLLab
-![Windows](https://img.shields.io/badge/Windows-passing-brightgreen)
+![Windows](https://img.shields.io/badge/Windows-passing-brightgreen)  
+![Linux](https://img.shields.io/badge/Linux(X86)-passing-brightgreen)  
 
 OpenCL code with C++ bindings for Windows  
 
@@ -23,8 +24,8 @@ I use v2023.04.17 (Synchronize with OpenCL v3.0.14 specification release): OpenC
 - Add include/ to environment variable INCLUDE.  
 - Add lib/ to environment variable LIB.  
 
-## Build Linux x86_64 binaries on Windows
-- Install WSL(Windows Subsystem for Linux)  
+## How to Build Linux x86_64 binaries on Windows WSL
+### Install WSL(Windows Subsystem for Linux)  
 Open Windows PowerShell in administrator mode  
 wsl --install  
 or  
@@ -33,12 +34,12 @@ wsl --install -d Ubuntu
 Create admin account and password for WSL  
 Update package with  
 sudo apt update && sudo apt upgrade  
-[optional]Map network drive \\wsl$  
-[optional]Use VS Code to connect to WSL  
-[optional]sudo apt  install cmake  
+[optional] Map network drive \\wsl$  
+sudo apt  install cmake  
 cmake --version to check setup   
-[optional]sudo apt install g++  
-- Copy the project folder into WSL file system  
+sudo apt install g++  
+### Build the Project on WSL
+- Copy the project folder into the WSL file system  
 - Install and load OpenCL for Linux x86-64  
 sudo apt install opencl-headers ocl-icd-opencl-dev -y  
 - Change CMakelists.txt  
@@ -48,7 +49,7 @@ To find OpenCL lib, add these:
 find_package(OpenCL REQUIRED)  
 link_libraries(OpenCL::OpenCL)  
 (OpenCL is found here: \usr\lib\x86_64-linux-gnu\libOpenCL.so) 
-- Open VS Code and link to WSL, open the correct folder, then cmake .. and make   
+- Open VS Code and connect to WSL, open the correct folder, then cmake .. and make   
 ### Other Useful Hints
 - To check WSL version(in Windows PowerShell):  
 wsl --list --verbose  
