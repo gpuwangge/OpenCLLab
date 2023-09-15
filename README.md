@@ -49,7 +49,7 @@ find_package(OpenCL REQUIRED)
 link_libraries(OpenCL::OpenCL)  
 (OpenCL is found here: \usr\lib\x86_64-linux-gnu\libOpenCL.so) 
 - Open VS Code and connect to WSL, open the correct folder, then cmake .. and make   
-- You may need change "\\\" into "/" if your code has such  
+- You may need change "/\\" into "/" if your code has such  
 ### Other Useful Hints
 - To check WSL version(in Windows PowerShell):  
 wsl --list --verbose  
@@ -64,7 +64,7 @@ sudo apt install clinfo
 (By the time of this readme, WSL 2 has not officially supported OpenCL yet)  
 - To check compiled binary info  
 file filename  
-- To build Linux ARM Binary
+- To build Linux ARM Binary  
 sudo apt-get install gcc-aarch64-linux-gnu  
 sudo apt-get install g++-aarch64-linux-gnu  
 (compilers are located in \usr\bin)  
@@ -73,7 +73,7 @@ set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)  
 (OpenCL lib can't be located this way though)  
 
-### Alternative OpenCL Lib
+### Alternative OpenCL Lib  
 If you install CUDA SDK, OpenCL is included in the CUDA SDK  
 (You can use MinGW x86_64-win32-seh for CUDA version)  
 
