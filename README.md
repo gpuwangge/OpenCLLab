@@ -1,6 +1,6 @@
 ﻿# OpenCLLab
 ![Windows](https://img.shields.io/badge/Windows-passing-brightgreen)
-![Linux](https://img.shields.io/badge/Linux(X86)-passing-brightgreen)  
+![Linux](https://img.shields.io/badge/Linux(X86_64)-passing-brightgreen)  
 
 OpenCL code with C++ bindings for Windows  
 
