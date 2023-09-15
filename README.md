@@ -26,13 +26,13 @@ I use v2023.04.17 (Synchronize with OpenCL v3.0.14 specification release): OpenC
 
 ## How to Build Linux x86_64 binaries on Windows WSL
 ### Install WSL(Windows Subsystem for Linux)  
-Open Windows PowerShell in administrator mode  
+- Open Windows PowerShell in administrator mode  
 wsl --install  
 or  
 wsl --install -d Ubuntu  
 (May need reboot during installation)  
-Create admin account and password for WSL  
-Update package with  
+- Create admin account and password for WSL  
+- Update package with  
 sudo apt update && sudo apt upgrade  
 [optional] Map network drive \\wsl$  
 sudo apt  install cmake  
