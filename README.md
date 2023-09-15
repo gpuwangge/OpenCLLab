@@ -39,17 +39,18 @@ sudo apt  install cmake
 (use cmake --version to check setup)   
 sudo apt install g++  
 ### Build the Project on WSL
-- Copy the project folder into the WSL file system  
-- Install and load OpenCL for Linux x86-64  
+- Copy the project folder into the WSL file system (for once)  
+- Open VS Code and connect to WSL, open the correct folder  
+- In Open VS terminal, install and load OpenCL for Linux x86-64 (for once)  
 sudo apt install opencl-headers ocl-icd-opencl-dev -y  
-- Change CMakelists.txt  
+- Change CMakelists.txt (for once)  
 remove the two lines that set compilers (Linux VS Code will call default gcc/g++ compilers)  
 To find OpenCL lib, add these:  
 find_package(OpenCL REQUIRED)  
 link_libraries(OpenCL::OpenCL)  
 (OpenCL is found here: \usr\lib\x86_64-linux-gnu\libOpenCL.so) 
-- Open VS Code and connect to WSL, open the correct folder, then cmake .. and make   
-- You may need change "\\\\" into "/" if your code has such  
+-mkdir build; cd build; cmake ..; make   
+- You may need change "\\\\" into "/" if your code has such (for once)  
 ### Other Useful Hints
 - To check WSL version(in Windows PowerShell):  
 wsl --list --verbose  
