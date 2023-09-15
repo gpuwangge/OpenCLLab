@@ -1,4 +1,4 @@
-#include "clFramework\\clApp.hpp"
+#include "clFramework/clApp.hpp"
 
 int main() {
 	CCLAPP clApp(true, true, true);

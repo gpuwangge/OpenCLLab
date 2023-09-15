@@ -1,4 +1,4 @@
-#include "clFramework\\clApp.hpp"
+#include "clFramework/clApp.hpp"
 #include <iomanip>
 
 #define DIM 4096
@@ -66,7 +66,7 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(false, true, true);//verbose, profiler, verify
+	CCLAPP clApp(false, true, false);//verbose, profiler, verify
 	clApp.initDevice();
 	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();

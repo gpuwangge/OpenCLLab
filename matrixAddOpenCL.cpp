@@ -1,4 +1,4 @@
-#include "clFramework\\clApp.hpp"
+#include "clFramework/clApp.hpp"
 
 //#define DIM 32768 //mxk squares + kxn squares, use power of 2(32768 = 1<<15)
 #define DIM 16384
