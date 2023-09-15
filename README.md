@@ -49,7 +49,7 @@ find_package(OpenCL REQUIRED)
 link_libraries(OpenCL::OpenCL)  
 (OpenCL is found here: \usr\lib\x86_64-linux-gnu\libOpenCL.so) 
 - Open VS Code and connect to WSL, open the correct folder, then cmake .. and make   
-- You may need change "/\\" into "/" if your code has such  
+- You may need change "\\\\" into "/" if your code has such  
 ### Other Useful Hints
 - To check WSL version(in Windows PowerShell):  
 wsl --list --verbose  
