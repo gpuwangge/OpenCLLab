@@ -49,7 +49,7 @@ To find OpenCL lib, add these:
 find_package(OpenCL REQUIRED)  
 link_libraries(OpenCL::OpenCL)  
 (OpenCL is found here: \usr\lib\x86_64-linux-gnu\libOpenCL.so) 
--mkdir build; cd build; cmake ..; make   
+- mkdir build; cd build; cmake ..; make   
 - You may need change "\\\\" into "/" if your code has such (for once)  
 ### Other Useful Hints
 - To check WSL version(in Windows PowerShell):  
