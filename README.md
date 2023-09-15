@@ -1,5 +1,5 @@
 ﻿# OpenCLLab
-![Windows](https://img.shields.io/badge/Windows-passing-brightgreen)  
+![Windows](https://img.shields.io/badge/Windows-passing-brightgreen)
 ![Linux](https://img.shields.io/badge/Linux(X86)-passing-brightgreen)  
 
 OpenCL code with C++ bindings for Windows  
@@ -36,7 +36,7 @@ Update package with
 sudo apt update && sudo apt upgrade  
 [optional] Map network drive \\wsl$  
 sudo apt  install cmake  
-cmake --version to check setup   
+(use cmake --version to check setup)   
 sudo apt install g++  
 ### Build the Project on WSL
 - Copy the project folder into the WSL file system  
@@ -44,12 +44,12 @@ sudo apt install g++
 sudo apt install opencl-headers ocl-icd-opencl-dev -y  
 - Change CMakelists.txt  
 remove the two lines that set compilers (Linux VS Code will call default gcc/g++ compilers)  
-(You may need change "\\" into "/" if your code has such)  
 To find OpenCL lib, add these:  
 find_package(OpenCL REQUIRED)  
 link_libraries(OpenCL::OpenCL)  
 (OpenCL is found here: \usr\lib\x86_64-linux-gnu\libOpenCL.so) 
 - Open VS Code and connect to WSL, open the correct folder, then cmake .. and make   
+- You may need change "\\" into "/" if your code has such  
 ### Other Useful Hints
 - To check WSL version(in Windows PowerShell):  
 wsl --list --verbose  
@@ -72,7 +72,6 @@ Change CMakeLists.txt
 set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc)  
 set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)  
 (OpenCL lib can't be located this way though)  
-
 
 ### Alternative OpenCL Lib
 If you install CUDA SDK, OpenCL is included in the CUDA SDK  
