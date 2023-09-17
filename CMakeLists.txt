@@ -13,8 +13,14 @@ link_libraries(OpenCL)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 	
-#add_executable(enumOpenCL enumOpenCL.cpp)
-add_executable(vectorAddOpenCL vectorAddOpenCL.cpp)
-add_executable(matrixAddOpenCL matrixAddOpenCL.cpp)
-add_executable(matrixMulOpenCL matrixMulOpenCL.cpp)
+
+#add_executable(vectorAddOpenCL vectorAddOpenCL.cpp)
+#add_executable(matrixAddOpenCL matrixAddOpenCL.cpp)
+#add_executable(matrixMulOpenCL matrixMulOpenCL.cpp)
+
+aux_source_directory(${PROJECT_SOURCE_DIR} SRC)
+foreach(sampleFile IN LISTS SRC)
+    get_filename_component(sampleName ${sampleFile} NAME_WE)
+    add_executable(${sampleName} ${sampleFile})
+endforeach()
 

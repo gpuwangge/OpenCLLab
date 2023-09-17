@@ -74,6 +74,13 @@ static void PrintMatrix(std::string message, std::vector<float> &matrix, int M, 
 	}
 }
 
+static void PrintVector(std::string message, std::vector<float> &vector, int N){
+    std::cout<<message<<std::endl;
+	for(int i = 0; i < N; i++)
+		std::cout<<vector[i]<<" ";
+    std::cout<<std::endl;
+}
+
 class CTimer final{
 public:
 	CTimer(){}
