@@ -1,7 +1,9 @@
 #include "clFramework/clApp.hpp"
 #include <iomanip>
 
-#define DIM 4096
+#define DIM 32
+//#define DIM 256
+//#define DIM 4096
 //#define DIM 8192
 //#define DIM 16384
 //#define DIM 32768
@@ -49,6 +51,7 @@ void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std
             for(int k = 0; k < K; k++){
                 outputMatrix[n*M + m] += matrixA[k*M + m] * matrixB[n*K + k];
             }
+			
             count++;
 			if(count % printDelta == 0){
 				float completeRate = (count * 100.0)/sampleNum ;
@@ -66,12 +69,12 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(false, true, false);//verbose, profiler, verify
+	CCLAPP clApp(false, true, true);//verbose, profiler, verify
 	clApp.initDevice();
 	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
 	clApp.buildProgram();
 
-	KernelModes kernelMode = KERNEL6;
+	KernelModes kernelMode = KERNEL1;
 
 	//Step 1: Create kernel program from shader function
 	cl::Kernel program_kernel;
@@ -196,7 +199,7 @@ int main() {
 
 		std::cout<<"Verification begin."<<std::endl;
 		for (int i=0; i<sampleNum; i++) {
-			float diff = outputMatrix[i]-c_host[i];
+			float diff = std::abs(outputMatrix[i]-c_host[i]);
 			if(diff > threshold)
 				std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputMatrix[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
 		}

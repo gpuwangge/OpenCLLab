@@ -80,7 +80,7 @@ int main() {
 		std::cout<<"Verification begin."<<std::endl;
 		for (int i=0; i<sampleNum; i++) {
 			float real = a_host[i]+b_host[i];
-			float diff = real-c_host[i];
+			float diff = std::abs(real-c_host[i]);
 			if(diff > threshold)
 				std::cout<<"Host: "<<real<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
 		}

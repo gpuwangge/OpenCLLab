@@ -1,7 +1,29 @@
 #include "clFramework/clApp.hpp"
+#include <iomanip>
 
-//#define DIM 32768 //mxk squares + kxn squares, use power of 2(32768 = 1<<15)
-#define DIM 3
+//#define DIM 2048
+#define DIM 4096
+//#define DIM 32768 //2(32768 = 1<<15)
+
+void CPUSingleThreadMatVecMul(int M, int N, std::vector<float> &matrixA, std::vector<float> &vectorB, std::vector<float> &outputVector, int sampleNum){
+    int count = 0;
+	int printDelta = sampleNum / 5;
+	
+	for(int m = 0; m < M; m++){
+		float acc = 0.0f;
+    	for (int n = 0; n < N; n++) 
+        	acc += matrixA[m*M + n] * vectorB[n];
+		outputVector[m] = acc;
+
+		count++;
+		if(count % printDelta == 0){
+			float completeRate = (count * 100.0)/sampleNum ;
+			std::cout<<"Completed: "<<completeRate<<"%"<<std::endl;
+		}
+			
+        if(count >= sampleNum) return;
+	}
+}
 
 int main() {
 	CTimer timer;
@@ -9,29 +31,29 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(true, true, true);
+	CCLAPP clApp(false, true, true);//verbose, profiler, verify
 	clApp.initDevice();
-	clApp.loadShader("matrixVectorMul.cl");// Compute c = a + b.
+	clApp.loadShader("matrixVectorMul.cl");// matrixA(m by n) * vectorB(n by 1) = vectorC(m by 1)
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
-	cl::Kernel program_kernel(clApp.program, "matrixAdd");
+	cl::Kernel program_kernel(clApp.program, "matrixVectorMul");
 
 	if(clApp.bProfiler) timer.printDeltaTime("Initializazion done");
 
 	//Step 2: Allocate host buffers, and fill with random numbers
 	const int matrixDimM = DIM; 
 	const int matrixDimN = DIM;
-	std::vector<float> a_host(matrixDimM*matrixDimN); 
-	std::vector<float> b_host(matrixDimN); 
-	std::vector<float> c_host(matrixDimN); 
+	std::vector<float> a_host(matrixDimM*matrixDimN, 1); 
+	std::vector<float> b_host(matrixDimN, 1); 
+	std::vector<float> c_host(matrixDimM); 
 
-	for (int i=0; i<matrixDimM*matrixDimN; i++) {
+
+	for (int i=0; i<matrixDimM*matrixDimN; i++) 
 		a_host[i] = (float)rand() / (float)RAND_MAX;
-	}
-	for (int i=0; i<matrixDimN; i++) {
+	for (int i=0; i<matrixDimN; i++) 
 		b_host[i] = (float)rand() / (float)RAND_MAX;
-	}
+	
 
 	if(clApp.bVerbose) PrintMatrix("Matrix A: ", a_host, matrixDimM, matrixDimN);
 	if(clApp.bVerbose) PrintVector("Vector B: ", b_host, matrixDimN);
@@ -67,21 +89,26 @@ int main() {
 
 	if(clApp.bProfiler) timer.printDeltaTime("Device >> Host");
 
-	if(clApp.bVerbose) PrintVector("Vector C: ", c_host, matrixDimN);
+	if(clApp.bVerbose) PrintVector("Vector C: ", c_host, matrixDimM);
 
 	//Verify Correctness
 	if(clApp.bVerify){
-		int sampleNum = 100 > matrixDimN ? matrixDimN : 100;
+		int sampleNum = 100 > matrixDimM ? matrixDimM : 100;
 		std::cout<<"sampleNum: "<<sampleNum<<std::endl;
-		float threshold = 0.000001f;
+		float threshold = 0.0001f;
 		std::cout<<"threshold: "<<threshold<<std::endl;
+
+		std::vector<float> outputVector(matrixDimM); 
+        CPUSingleThreadMatVecMul(matrixDimM, matrixDimN, a_host, b_host, outputVector, sampleNum);
+		if(clApp.bProfiler) timer.printDeltaTime("---Profiler: CPU single thread calculation done");
 
 		std::cout<<"Verification begin."<<std::endl;
 		for (int i=0; i<sampleNum; i++) {
-			float real = a_host[i]+b_host[i];
-			float diff = real-c_host[i];
+			//std::cout<<c_host[i]<<std::endl;
+			//std::cout<<outputVector[i]<<std::endl;
+			float diff = std::abs(outputVector[i]-c_host[i]);
 			if(diff > threshold)
-				std::cout<<"Host: "<<real<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+				std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputVector[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
 		}
 		std::cout<<"Verification done."<<std::endl;
 	}
