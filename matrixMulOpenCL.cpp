@@ -1,15 +1,12 @@
 #include "clFramework/clApp.hpp"
 #include <iomanip>
 
-#define DIM 32
+#define DIM 2
 //#define DIM 256
 //#define DIM 4096
 //#define DIM 8192
 //#define DIM 16384
 //#define DIM 32768
-
-#define TILESIZE 32  //Tile Size: for 1080 TI, CL_DEVICE_MAX_WORK_GROUP_SIZE=1024=32x32, so 32 is maximum TS value.
-//#define TILESIZE 16   //for Iris GPU
 
 enum KernelModes 
 {   KERNEL1 = 0, //Naive implementation
@@ -19,6 +16,11 @@ enum KernelModes
 	KERNEL5 = 4, //Transposed input matrix and rectangular tiles
     KERNEL6 = 5	 //2D register blocking
 };
+
+#define TILESIZE 1  //Tile Size: for 1080 TI, CL_DEVICE_MAX_WORK_GROUP_SIZE=1024=32x32, so 32 is maximum TS value.
+//#define TILESIZE 16   //for Iris GPU
+
+#define WPT 8 //for kernel 3
 
 // Constants for kernels 4, 7 -- 10
 #define WIDTH 4                      // The vector-width (in number of floats)
@@ -36,22 +38,16 @@ enum KernelModes
 
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
     int count = 0;
-	int printDelta = sampleNum / 5;
+	int printDelta = sampleNum / 1;
     for(int m = 0; m < M; m++){ //row
         for(int n = 0; n < N; n++){ //col
-            //row major matrix multiplication
-            /*
-            outputMatrix[m*N + n] = 0;
-            for(int k = 0; k < K; k++){
-                outputMatrix[m*N + n] += matrixA[m*K + k] * matrixB[k*N + n];
-            }
-            */
             //column major matrix multiplication
+			//c(K by K) = b(K by N)*a(M by K)
             outputMatrix[n*M + m] = 0;
             for(int k = 0; k < K; k++){
                 outputMatrix[n*M + m] += matrixA[k*M + m] * matrixB[n*K + k];
             }
-			
+
             count++;
 			if(count % printDelta == 0){
 				float completeRate = (count * 100.0)/sampleNum ;
@@ -69,9 +65,9 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(false, true, true);//verbose, profiler, verify
+	CCLAPP clApp(true, true, true);//verbose, profiler, verify
 	clApp.initDevice();
-	clApp.loadShader("matrixMul.cl");// Compute c = a*b.
+	clApp.loadShader("matrixMul.cl");// Compute c = b*a.
 	clApp.buildProgram();
 
 	KernelModes kernelMode = KERNEL1;
@@ -82,7 +78,7 @@ int main() {
 	program_kernel = cl::Kernel(clApp.program, kernelName.c_str());
 
 	cl::Kernel program_transpose;
-	if(kernelMode == KERNEL5|KERNEL6)
+	if(kernelMode == KERNEL5 || kernelMode == KERNEL6)
 		program_transpose = cl::Kernel(clApp.program, "transpose");
 	
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Initializazion done");
@@ -120,7 +116,7 @@ int main() {
 	if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Host >> Device");
 
 	//Step 4: Set kernel parameters.
-	if(kernelMode == KERNEL5|KERNEL6){
+	if(kernelMode == KERNEL5 || kernelMode == KERNEL6){
 		program_transpose.setArg(0, matrixDimK);
 		program_transpose.setArg(1, matrixDimN);
 		program_transpose.setArg(2, B_device);
@@ -131,14 +127,13 @@ int main() {
 	program_kernel.setArg(1, matrixDimN);
     program_kernel.setArg(2, matrixDimK);
 	program_kernel.setArg(3, A_device);
-	if(kernelMode == KERNEL5|KERNEL6) program_kernel.setArg(4, B_TR_device);
+	if(kernelMode == KERNEL5 || kernelMode == KERNEL6) program_kernel.setArg(4, B_TR_device);
 	else program_kernel.setArg(4, B_device);
 	program_kernel.setArg(5, C_device);
 
 	//if(clApp.bProfiler) timer.printDeltaTime("---Profiler: Set kernel parameters");
 	
 	//Step 5: Launch kernel on the compute device.
-	const int WPT = 8; //for kernel 3
 	cl::NDRange local(TILESIZE, TILESIZE);
     cl::NDRange global(matrixDimM, matrixDimN);
 
@@ -167,7 +162,7 @@ int main() {
 		break;
 	}
 
-	if(kernelMode == KERNEL5|KERNEL6){
+	if(kernelMode == KERNEL5 || kernelMode == KERNEL6){
 		cl::NDRange transposeLocal(TRANSPOSEX, TRANSPOSEY);
     	cl::NDRange transposeGlobal(matrixDimK, matrixDimN);
 		clApp.queue.enqueueNDRangeKernel(program_transpose, cl::NullRange, transposeGlobal, transposeLocal);
