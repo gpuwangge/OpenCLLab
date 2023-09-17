@@ -1,9 +1,9 @@
 #include "clFramework/clApp.hpp"
 #include <iomanip>
 
-#define DIM 2
+//#define DIM 128
 //#define DIM 256
-//#define DIM 4096
+#define DIM 4096
 //#define DIM 8192
 //#define DIM 16384
 //#define DIM 32768
@@ -39,10 +39,9 @@ enum KernelModes
 void CPUSingleThreadMatMul(int M, int N, int K, std::vector<float> &matrixA, std::vector<float> &matrixB, std::vector<float> &outputMatrix, int sampleNum){
     int count = 0;
 	int printDelta = sampleNum / 1;
-    for(int m = 0; m < M; m++){ //row
-        for(int n = 0; n < N; n++){ //col
+	for(int n = 0; n < N; n++){ //col
+    	for(int m = 0; m < M; m++){ //row： fill row first, allign with kernel
             //column major matrix multiplication
-			//c(K by K) = b(K by N)*a(M by K)
             outputMatrix[n*M + m] = 0;
             for(int k = 0; k < K; k++){
                 outputMatrix[n*M + m] += matrixA[k*M + m] * matrixB[n*K + k];
@@ -65,12 +64,15 @@ int main() {
 	
 	srand(time(NULL));
 
-	CCLAPP clApp(true, true, true);//verbose, profiler, verify
+	CCLAPP clApp(false, true, true);//verbose, profiler, verify
 	clApp.initDevice();
-	clApp.loadShader("matrixMul.cl");// Compute c = b*a.
+	//https://cnugteren.github.io/tutorial/pages/page2.html
+	//Column Majer: Compute c(M by N) = a(K by M) * b(N by K)
+	//Row Major Euqivalent?: c(N by M) = b(N by K) * a(K by M) 
+	clApp.loadShader("matrixMul.cl");
 	clApp.buildProgram();
 
-	KernelModes kernelMode = KERNEL1;
+	KernelModes kernelMode = KERNEL6;
 
 	//Step 1: Create kernel program from shader function
 	cl::Kernel program_kernel;
@@ -184,21 +186,24 @@ int main() {
 	if(clApp.bVerify){
 		int sampleNum = 10000 > matrixDimM*matrixDimN ? matrixDimM*matrixDimN : 10000;
 		//int sampleNum = matrixDimM*matrixDimN;
-		std::cout<<"sampleNum: "<<sampleNum<<std::endl;
-		float threshold = 0.000001f;
-		std::cout<<"threshold: "<<threshold<<std::endl;
+		float threshold = 0.00013f;
 
         std::vector<float> outputMatrix(matrixDimM*matrixDimN); 
         CPUSingleThreadMatMul(matrixDimM, matrixDimN, matrixDimK, a_host, b_host, outputMatrix, sampleNum);
 		if(clApp.bProfiler) timer.printDeltaTime("---Profiler: CPU single thread calculation done");
 
-		std::cout<<"Verification begin."<<std::endl;
+		std::cout<<"Verification begin: "<<"sampleNum="<<sampleNum<<"/"<<matrixDimM*matrixDimN<<" threshold="<<threshold<<std::endl;
+		int count = 0;
 		for (int i=0; i<sampleNum; i++) {
 			float diff = std::abs(outputMatrix[i]-c_host[i]);
-			if(diff > threshold)
-				std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputMatrix[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+			if(diff > threshold){
+				if(count <= 5)
+					std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputMatrix[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+				count++;
+			}
 		}
-		std::cout<<"Verification done."<<std::endl;
+		if(count > 5) std::cout<<"("<<count-5<<" failed numbers not printed.)"<<std::endl;
+		std::cout<<"Verification done: "<<count<<"/"<<sampleNum<<" number(s) failed"<<std::endl;
 	}
 
 

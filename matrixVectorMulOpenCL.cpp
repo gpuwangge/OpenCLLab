@@ -33,7 +33,7 @@ int main() {
 
 	CCLAPP clApp(false, true, true);//verbose, profiler, verify
 	clApp.initDevice();
-	clApp.loadShader("matrixVectorMul.cl");// matrixA(m by n) * vectorB(n by 1) = vectorC(m by 1)
+	clApp.loadShader("matrixVectorMul.cl");//Row Major: matrixA(m by n) * vectorB(n by 1) = vectorC(m by 1)
 	clApp.buildProgram();
 
 	//Step 1: Create kernel program from shader function
@@ -94,23 +94,26 @@ int main() {
 	//Verify Correctness
 	if(clApp.bVerify){
 		int sampleNum = 100 > matrixDimM ? matrixDimM : 100;
-		std::cout<<"sampleNum: "<<sampleNum<<std::endl;
 		float threshold = 0.0001f;
-		std::cout<<"threshold: "<<threshold<<std::endl;
 
 		std::vector<float> outputVector(matrixDimM); 
         CPUSingleThreadMatVecMul(matrixDimM, matrixDimN, a_host, b_host, outputVector, sampleNum);
 		if(clApp.bProfiler) timer.printDeltaTime("---Profiler: CPU single thread calculation done");
 
-		std::cout<<"Verification begin."<<std::endl;
+		std::cout<<"Verification begin: "<<"sampleNum="<<sampleNum<<"/"<<matrixDimM<<" threshold="<<threshold<<std::endl;
+		int count = 0;
 		for (int i=0; i<sampleNum; i++) {
 			//std::cout<<c_host[i]<<std::endl;
 			//std::cout<<outputVector[i]<<std::endl;
 			float diff = std::abs(outputVector[i]-c_host[i]);
-			if(diff > threshold)
-				std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputVector[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+			if(diff > threshold){
+				if(count <= 5)
+					std::cout<<"i="<<i<<std::setprecision(10) <<", Host: "<<outputVector[i]<<", Device: "<<c_host[i]<<", Diff: "<<diff<<std::endl;
+				count++;
+			}
 		}
-		std::cout<<"Verification done."<<std::endl;
+		if(count > 5) std::cout<<"("<<count-5<<" failed numbers not printed.)"<<std::endl;
+		std::cout<<"Verification done: "<<count<<"/"<<sampleNum<<" number(s) failed"<<std::endl;
 	}
 
 
